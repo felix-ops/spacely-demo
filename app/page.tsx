@@ -1,65 +1,105 @@
-import Image from "next/image";
+"use client";
+
+import { useCallback } from "react";
+import BabylonScene from "@/components/babylon-renderer";
+import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
+import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
+import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
+import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
+import type { Scene } from "@babylonjs/core/scene";
+import type { Engine } from "@babylonjs/core/Engines/engine";
 
 export default function Home() {
+  const onSceneReady = useCallback((scene: Scene, engine: Engine) => {
+    // Dark background
+    scene.clearColor = new Color4(0.05, 0.05, 0.08, 1);
+
+    const canvas = engine.getRenderingCanvas();
+
+    // Camera
+    const camera = new ArcRotateCamera(
+      "camera",
+      -Math.PI / 2,
+      Math.PI / 2.5,
+      5,
+      Vector3.Zero(),
+      scene
+    );
+    camera.attachControl(canvas, true);
+    camera.wheelDeltaPercentage = 0.01;
+    camera.minZ = 0.1;
+
+    // Lights
+    const light = new HemisphericLight("light", new Vector3(0, 1, 0), scene);
+    light.intensity = 0.8;
+    light.diffuse = new Color3(0.95, 0.9, 1);
+    light.groundColor = new Color3(0.1, 0.1, 0.2);
+
+    // Ground
+    const ground = MeshBuilder.CreateGround(
+      "ground",
+      { width: 10, height: 10 },
+      scene
+    );
+    const groundMat = new StandardMaterial("groundMat", scene);
+    groundMat.diffuseColor = new Color3(0.15, 0.15, 0.2);
+    groundMat.specularColor = new Color3(0.05, 0.05, 0.05);
+    ground.material = groundMat;
+
+    // Sphere
+    const sphere = MeshBuilder.CreateSphere(
+      "sphere",
+      { diameter: 1.5, segments: 32 },
+      scene
+    );
+    sphere.position.y = 1;
+    const sphereMat = new StandardMaterial("sphereMat", scene);
+    sphereMat.diffuseColor = new Color3(0.3, 0.6, 1);
+    sphereMat.specularColor = new Color3(1, 1, 1);
+    sphereMat.specularPower = 64;
+    sphere.material = sphereMat;
+
+    // Box
+    const box = MeshBuilder.CreateBox("box", { size: 0.8 }, scene);
+    box.position = new Vector3(-2, 0.4, 0);
+    const boxMat = new StandardMaterial("boxMat", scene);
+    boxMat.diffuseColor = new Color3(1, 0.4, 0.3);
+    boxMat.specularColor = new Color3(1, 1, 1);
+    boxMat.specularPower = 32;
+    box.material = boxMat;
+
+    // Torus
+    const torus = MeshBuilder.CreateTorus(
+      "torus",
+      { diameter: 1, thickness: 0.3, tessellation: 32 },
+      scene
+    );
+    torus.position = new Vector3(2, 0.5, 0);
+    const torusMat = new StandardMaterial("torusMat", scene);
+    torusMat.diffuseColor = new Color3(0.4, 1, 0.5);
+    torusMat.specularColor = new Color3(1, 1, 1);
+    torusMat.specularPower = 48;
+    torus.material = torusMat;
+
+    // Animate the objects
+    let t = 0;
+    scene.registerBeforeRender(() => {
+      t += engine.getDeltaTime() / 1000;
+      sphere.position.y = 1 + Math.sin(t * 1.5) * 0.2;
+      box.rotation.y += 0.01;
+      box.rotation.x += 0.005;
+      torus.rotation.x += 0.02;
+      torus.rotation.z += 0.01;
+    });
+  }, []);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <BabylonScene
+      className="w-full h-full flex-1"
+      onSceneReady={onSceneReady}
+      debug
+    />
   );
 }
