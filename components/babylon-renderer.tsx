@@ -18,6 +18,12 @@ export default function BabylonScene({
   debug = false,
 }: BabylonSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const onSceneReadyRef = useRef(onSceneReady);
+  const debugRef = useRef(debug);
+
+  // Keep refs up to date without triggering effect re-runs
+  onSceneReadyRef.current = onSceneReady;
+  debugRef.current = debug;
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -34,13 +40,13 @@ export default function BabylonScene({
     const scene = new Scene(engine);
 
     // Execute the custom 3D code
-    onSceneReady(scene, engine);
+    onSceneReadyRef.current(scene, engine);
 
     // hide/show the Inspector
     const handleKeyDown = (ev: KeyboardEvent) => {
       // Shift+Ctrl+Alt+I
       if (
-        debug &&
+        debugRef.current &&
         ev.shiftKey &&
         ev.ctrlKey &&
         ev.altKey &&
@@ -100,9 +106,12 @@ export default function BabylonScene({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("resize", fixResolution);
+      window.removeEventListener("orientationchange", fixResolution);
       engine.dispose();
     };
-  }, [onSceneReady, debug]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className={className} style={{ background: "transparent" }}>

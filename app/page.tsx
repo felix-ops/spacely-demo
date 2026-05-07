@@ -1,7 +1,7 @@
 "use client";
 
 import BabylonScene from "@/components/babylon-renderer";
-import { setup } from "./3d-setup/stereoscopic-viewer";
+import { setup } from "./viewport";
 
 export default function Home() {
   return (
