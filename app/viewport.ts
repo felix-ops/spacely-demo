@@ -30,33 +30,48 @@ export const setup = async (scene: Scene, engine: Engine) => {
   sphere.scaling.y = -1; // flip faces inward
 
   // Textures
-  const classroomColorTexture = new Texture(
-    "/360-classroom-color-3k.jpg",
-    scene,
-  );
+  const classroomColorTexture = new Texture("/studio-color-2K.jpg", scene);
   const classroomDepthTexture = new Texture(
-    "/360-classroom-depth-3k-floatpacked.png",
+    "/studio-depth-fp-2K.png",
     scene,
     false,
     true,
     Texture.NEAREST_SAMPLINGMODE,
   );
+  // const classroomColorTexture = new Texture(
+  //   "/360-classroom-color-3k.jpg",
+  //   scene,
+  // );
+  // const classroomDepthTexture = new Texture(
+  //   "/360-classroom-depth-3k-floatpacked.png",
+  //   scene,
+  //   false,
+  //   true,
+  //   Texture.NEAREST_SAMPLINGMODE,
+  // );
 
   classroomDepthTexture.gammaSpace = false;
 
   // Custom shader material for equirectangular projection + depth parallax
   const sphereMat = new ShaderMaterial("equirectMat", scene, SHADER_NAME, {
     attributes: ["position"],
-    uniforms: ["worldViewProjection", "world", "view", "maxDepth", "u_time"],
+    uniforms: [
+      "worldViewProjection",
+      "world",
+      "view",
+      "maxDepth",
+      "u_time",
+      "viewProjection",
+    ],
     samplers: ["colorTexture", "depthTexture"],
   });
 
   sphereMat.setTexture("colorTexture", classroomColorTexture);
   sphereMat.setTexture("depthTexture", classroomDepthTexture);
-  sphereMat.setFloat("maxDepth", 8.1); // white (1.0) in depth map = 8.05 world units
+  sphereMat.setFloat("maxDepth", 3); // white (1.0) in depth map = 8.05 world units
   sphereMat.backFaceCulling = false;
-
   sphere.material = sphereMat;
+  // sphereMat.setMatrix("viewProjection", scene.getTransformMatrix());
 
   // Update time uniform every frame for jitter
   let elapsedTime = 0;
@@ -66,8 +81,8 @@ export const setup = async (scene: Scene, engine: Engine) => {
 
     const amplitude = 0.032;
 
-    camera.position.x = Math.sin(elapsedTime * 10) * amplitude;
-    camera.position.y = Math.cos(elapsedTime * 10) * amplitude;
+    // camera.position.x = Math.sin(elapsedTime * 10) * amplitude;
+    // camera.position.y = Math.cos(elapsedTime * 10) * amplitude;
   });
 
   // WebXR VR support

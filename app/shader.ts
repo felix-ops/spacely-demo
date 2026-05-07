@@ -33,11 +33,20 @@ const FRAGMENT_SHADER = /*glsl*/ `
   uniform sampler2D depthTexture;
   uniform mat4      view;             // per-eye view matrix (auto-updated by Babylon/WebXR)
   uniform float     maxDepth;         // world-space distance that white (1.0) maps to
+  uniform float     u_time;           // Time for random jitter
 
   #define PI        3.141592653589793
   #define TAU       6.283185307179586
   #define NUM_STEPS 64
   #define REFINE    8
+
+  // Hash without Sine
+  // https://www.shadertoy.com/view/4djSRW
+  float hash12(vec2 p) {
+    vec3 p3  = fract(vec3(p.xyx) * .1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+  }
 
   // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -77,14 +86,17 @@ const FRAGMENT_SHADER = /*glsl*/ `
     float tMax  = maxDepth * 2.0;
     float dt    = tMax / float(NUM_STEPS);
 
-    float tPrev = 0.0;
-    float tCur  = 0.0;
+    float jitter = hash12(gl_FragCoord.xy + u_time * 50.0);
+    float tStart = jitter * dt;
+
+    float tPrev = tStart;
+    float tCur  = tStart;
     bool  hit   = false;
 
     for (int i = 0; i < NUM_STEPS; i++) {
       tCur += dt;
       vec3  p      = camPos + rayDir * tCur;
-      float dist   = length(p);                      // distance of sample from origin
+      float dist   = length(p);                       // distance of sample from origin
       vec3  dir    = p / dist;                        // normalised direction from origin
       float surfD  = sampleDepth(dir);                // depth surface distance
 
