@@ -7,19 +7,31 @@ import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import "@babylonjs/core/Helpers/sceneHelpers";
+import { WebXRState } from "@babylonjs/core/XR/webXRTypes";
 import { SHADER_NAME } from "./shader";
+import { fetchMaxDepthFromPng } from "../lib/utils";
 
-export const setup = async (scene: Scene, engine: Engine) => {
+import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
+export const setup = async (
+  scene: Scene,
+  engine: Engine,
+  colorUrl = "/bedroom-color-3K.png",
+  depthUrl = "/bedroom-da360-3K.png",
+) => {
+  const canvas = engine.getRenderingCanvas();
+
   // Dark background
   scene.clearColor = Color4.FromHexString("#000000ff");
-
-  const canvas = engine.getRenderingCanvas();
 
   // Camera
   const camera = new FreeCamera("camera", Vector3.Zero(), scene);
   camera.attachControl(canvas, true);
   camera.minZ = 0.01;
   camera.speed = 0.05;
+
+  // Add this inside your setup() function
+  const light = new HemisphericLight("light", new Vector3(0, 1, 0), scene);
+  light.intensity = 1.0;
 
   // Sphere (large, inverted so texture faces inward)
   const sphere = MeshBuilder.CreateSphere(
@@ -30,27 +42,15 @@ export const setup = async (scene: Scene, engine: Engine) => {
   sphere.scaling.y = -1; // flip faces inward
 
   // Textures
-  const classroomColorTexture = new Texture("/studio-color-2K.jpg", scene);
-  const classroomDepthTexture = new Texture(
-    "/studio-depth-fp-2K.png",
+  activeColorTexture = new Texture(colorUrl, scene, true);
+  activeDepthTexture = new Texture(
+    depthUrl,
     scene,
-    false,
+    true,
     true,
     Texture.NEAREST_SAMPLINGMODE,
   );
-  // const classroomColorTexture = new Texture(
-  //   "/360-classroom-color-3k.jpg",
-  //   scene,
-  // );
-  // const classroomDepthTexture = new Texture(
-  //   "/360-classroom-depth-3k-floatpacked.png",
-  //   scene,
-  //   false,
-  //   true,
-  //   Texture.NEAREST_SAMPLINGMODE,
-  // );
-
-  classroomDepthTexture.gammaSpace = false;
+  activeDepthTexture.gammaSpace = false;
 
   // Custom shader material for equirectangular projection + depth parallax
   const sphereMat = new ShaderMaterial("equirectMat", scene, SHADER_NAME, {
@@ -66,9 +66,16 @@ export const setup = async (scene: Scene, engine: Engine) => {
     samplers: ["colorTexture", "depthTexture"],
   });
 
-  sphereMat.setTexture("colorTexture", classroomColorTexture);
-  sphereMat.setTexture("depthTexture", classroomDepthTexture);
-  sphereMat.setFloat("maxDepth", 3); // white (1.0) in depth map = 8.05 world units
+  sphereMat.setTexture("colorTexture", activeColorTexture);
+  sphereMat.setTexture("depthTexture", activeDepthTexture);
+
+  sphereMat.setFloat("maxDepth", 8); // fallback
+  // fetchMaxDepthFromPng(DEPTH_TEXTURE_URL).then((depth) => {
+  //   if (depth !== null) {
+  //     sphereMat.setFloat("maxDepth", depth);
+  //   }
+  // });
+
   sphereMat.backFaceCulling = false;
   sphere.material = sphereMat;
   // sphereMat.setMatrix("viewProjection", scene.getTransformMatrix());
@@ -99,10 +106,52 @@ export const setup = async (scene: Scene, engine: Engine) => {
       },
     });
 
-    if (!xrExperience.baseExperience) {
+    if (xrExperience.baseExperience) {
+      xrExperience.baseExperience.onStateChangedObservable.add((state) => {
+        if (state === WebXRState.NOT_IN_XR) {
+          camera.position.setAll(0);
+        }
+      });
+
+      scene.onBeforeRenderObservable.add(() => {
+        if (xrExperience.baseExperience.state === WebXRState.IN_XR) {
+          xrExperience.baseExperience.camera.position.setAll(0);
+        }
+      });
+    } else {
       console.warn("WebXR not supported in this browser");
     }
   } catch (e) {
     console.warn("WebXR initialization failed:", e);
   }
+};
+
+let activeColorTexture: Texture | null = null;
+let activeDepthTexture: Texture | null = null;
+
+export const updateTextures = (
+  scene: Scene,
+  colorUrl: string,
+  depthUrl: string,
+) => {
+  const sphere = scene.getMeshByName("sphere");
+  if (!sphere || !sphere.material) return;
+
+  const sphereMat = sphere.material as ShaderMaterial;
+
+  if (activeColorTexture) activeColorTexture.dispose();
+  if (activeDepthTexture) activeDepthTexture.dispose();
+
+  activeColorTexture = new Texture(colorUrl, scene, true);
+  activeDepthTexture = new Texture(
+    depthUrl,
+    scene,
+    true,
+    true,
+    Texture.NEAREST_SAMPLINGMODE,
+  );
+  activeDepthTexture.gammaSpace = false;
+
+  sphereMat.setTexture("colorTexture", activeColorTexture);
+  sphereMat.setTexture("depthTexture", activeDepthTexture);
 };

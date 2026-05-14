@@ -7,14 +7,16 @@
  * @returns The output value corresponding to the input value projected onto the output range.
  */
 export function linearProjection(
-	inputRange: [start: number, end: number],
-	outputRange: [start: number, end: number],
-	inputVal: number,
+  inputRange: [start: number, end: number],
+  outputRange: [start: number, end: number],
+  inputVal: number,
 ) {
-	const outputVal =
-		outputRange[0] + ((inputVal - inputRange[0]) * (outputRange[1] - outputRange[0])) / (inputRange[1] - inputRange[0]);
+  const outputVal =
+    outputRange[0] +
+    ((inputVal - inputRange[0]) * (outputRange[1] - outputRange[0])) /
+      (inputRange[1] - inputRange[0]);
 
-	return outputVal;
+  return outputVal;
 }
 
 /**
@@ -33,21 +35,26 @@ export function linearProjection(
  */
 
 export function mapRange(
-	inputVal: number,
-	fromRange: [min: number, max: number],
-	toRange: [min: number, max: number],
-	clamp: boolean = true,
+  inputVal: number,
+  fromRange: [min: number, max: number],
+  toRange: [min: number, max: number],
+  clamp: boolean = true,
 ) {
-	//If min is greater then max swap the values
-	if (toRange[1] < toRange[0]) {
-		toRange = [toRange[1], toRange[0]];
-		fromRange = [fromRange[1], fromRange[0]];
-	}
+  //If min is greater then max swap the values
+  if (toRange[1] < toRange[0]) {
+    toRange = [toRange[1], toRange[0]];
+    fromRange = [fromRange[1], fromRange[0]];
+  }
 
-	let mapped_output = linearProjection([fromRange[0], fromRange[1]], [toRange[0], toRange[1]], inputVal);
-	if (clamp) mapped_output = Math.max(toRange[0], Math.min(toRange[1], mapped_output));
+  let mapped_output = linearProjection(
+    [fromRange[0], fromRange[1]],
+    [toRange[0], toRange[1]],
+    inputVal,
+  );
+  if (clamp)
+    mapped_output = Math.max(toRange[0], Math.min(toRange[1], mapped_output));
 
-	return mapped_output;
+  return mapped_output;
 }
 
 /**
@@ -58,6 +65,73 @@ export function mapRange(
  * @param epsilon a small value which defines the precision of the comparision
  * @returns The boolean of whether they are almost equal or not
  */
-export function almostEqual(a: number, b: number, epsilon: number = Number.EPSILON): boolean {
-	return Math.abs(a - b) < epsilon;
+export function almostEqual(
+  a: number,
+  b: number,
+  epsilon: number = Number.EPSILON,
+): boolean {
+  return Math.abs(a - b) < epsilon;
+}
+
+/**
+ * Fetches a PNG file from a given URL and parses its binary chunks to extract the 'max_depth' metadata value.
+ * This is typically stored in a tEXt chunk by image processing libraries like PIL.
+ *
+ * @param url The URL of the PNG image to fetch and parse.
+ * @returns A promise that resolves to the parsed max_depth float value if found, or null if it cannot be found or parsing fails.
+ */
+export async function fetchMaxDepthFromPng(url: string): Promise<number | null> {
+  try {
+    const response = await fetch(url);
+    const buffer = await response.arrayBuffer();
+    const dataView = new DataView(buffer);
+
+    // Check PNG signature
+    if (
+      dataView.getUint32(0) !== 0x89504e47 ||
+      dataView.getUint32(4) !== 0x0d0a1a0a
+    ) {
+      return null;
+    }
+
+    let offset = 8;
+    while (offset < buffer.byteLength) {
+      const length = dataView.getUint32(offset);
+      const type = String.fromCharCode(
+        dataView.getUint8(offset + 4),
+        dataView.getUint8(offset + 5),
+        dataView.getUint8(offset + 6),
+        dataView.getUint8(offset + 7),
+      );
+
+      if (type === "tEXt") {
+        const dataOffset = offset + 8;
+        let keyword = "";
+        let i = 0;
+        while (i < length) {
+          const charCode = dataView.getUint8(dataOffset + i);
+          if (charCode === 0) break;
+          keyword += String.fromCharCode(charCode);
+          i++;
+        }
+
+        if (keyword === "max_depth") {
+          i++; // Skip null terminator
+          let valueStr = "";
+          while (i < length) {
+            valueStr += String.fromCharCode(dataView.getUint8(dataOffset + i));
+            i++;
+          }
+          const parsed = parseFloat(valueStr);
+          if (!isNaN(parsed)) return parsed;
+        }
+      }
+
+      if (type === "IEND") break;
+      offset += 12 + length;
+    }
+  } catch (err) {
+    console.error("Failed to parse PNG metadata:", err);
+  }
+  return null;
 }
