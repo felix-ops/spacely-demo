@@ -15,8 +15,9 @@ import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 export const setup = async (
   scene: Scene,
   engine: Engine,
-  colorUrl = "/bedroom-color-3K.png",
-  depthUrl = "/bedroom-da360-3K.png",
+  colorUrl = "/samples/classroom_3k.jpg",
+  depthUrl = "/samples/classroom_3k_depth.png",
+  maxDepth?: number,
 ) => {
   const canvas = engine.getRenderingCanvas();
 
@@ -69,12 +70,11 @@ export const setup = async (
   sphereMat.setTexture("colorTexture", activeColorTexture);
   sphereMat.setTexture("depthTexture", activeDepthTexture);
 
-  sphereMat.setFloat("maxDepth", 8); // fallback
-  // fetchMaxDepthFromPng(DEPTH_TEXTURE_URL).then((depth) => {
-  //   if (depth !== null) {
-  //     sphereMat.setFloat("maxDepth", depth);
-  //   }
-  // });
+  if (maxDepth !== undefined) {
+    sphereMat.setFloat("maxDepth", maxDepth);
+  } else {
+    sphereMat.setFloat("maxDepth", 8); // fallback
+  }
 
   sphereMat.backFaceCulling = false;
   sphere.material = sphereMat;
@@ -133,6 +133,7 @@ export const updateTextures = (
   scene: Scene,
   colorUrl: string,
   depthUrl: string,
+  maxDepth?: number,
 ) => {
   const sphere = scene.getMeshByName("sphere");
   if (!sphere || !sphere.material) return;
@@ -154,4 +155,15 @@ export const updateTextures = (
 
   sphereMat.setTexture("colorTexture", activeColorTexture);
   sphereMat.setTexture("depthTexture", activeDepthTexture);
+
+  if (maxDepth !== undefined) {
+    sphereMat.setFloat("maxDepth", maxDepth);
+  } else {
+    sphereMat.setFloat("maxDepth", 8); // fallback
+    // fetchMaxDepthFromPng(depthUrl).then((depth) => {
+    //   if (depth !== null) {
+    //     sphereMat.setFloat("maxDepth", depth);
+    //   }
+    // });
+  }
 };

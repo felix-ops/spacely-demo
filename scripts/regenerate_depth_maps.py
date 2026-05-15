@@ -45,14 +45,7 @@ def regenerate_depth_maps(directory):
     print(f"\nRegenerating depth maps for {len(img_files)} images...")
     for img_file in img_files:
         output_file = os.path.splitext(img_file)[0] + "_depth.png"
-        # If output filename ends up mapping differently based on specific overrides, handle standard pattern
-        if "classroom-color" in img_file:
-            output_file = os.path.join(directory, "classroom-depth-3k.png")
-        elif "studio-color" in img_file:
-            output_file = os.path.join(directory, "studio-da2-2K.png")
-        elif "bedroom-color" in img_file:
-            output_file = os.path.join(directory, "bedroom-da2-3K.png")
-            
+
         print(f"Processing {os.path.basename(img_file)}...")
         
         try:
