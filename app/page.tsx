@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { getAssetUrl } from "./environments";
 
 export default function HeroPage() {
   const [scrolled, setScrolled] = useState(false);
@@ -367,7 +368,7 @@ function HeroCarousel() {
         {slides.map((slide, idx) => (
           <img
             key={idx}
-            src={slide.image}
+            src={getAssetUrl(slide.image)}
             alt={slide.title}
             className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-100 ${
               idx === currentIndex ? "opacity-100" : "opacity-0"

@@ -135,3 +135,52 @@ export async function fetchMaxDepthFromPng(url: string): Promise<number | null> 
   }
   return null;
 }
+
+let activeBlobUrls: string[] = [];
+
+/**
+ * Preloads a list of image URLs in parallel, tracks the download progress percentage,
+ * and returns local Object URLs (blobs) to avoid redundant network queries and ensure
+ * instant resolution in client frameworks (e.g., Babylon.js texture loading).
+ * Automatically handles revoking previous Object URLs to prevent browser memory leaks.
+ *
+ * @param urls An array of image URLs to fetch and cache locally.
+ * @param onProgress An optional callback invoked with the completion percentage (0-100).
+ * @returns A promise that resolves to an array of local Object URLs (or original URLs on fetch failure).
+ */
+export const preloadImages = async (
+  urls: string[],
+  onProgress?: (percent: number) => void,
+): Promise<string[]> => {
+  // Revoke previous blob URLs to prevent memory leaks
+  activeBlobUrls.forEach((url) => {
+    if (url.startsWith("blob:")) {
+      URL.revokeObjectURL(url);
+    }
+  });
+  activeBlobUrls = [];
+
+  let loadedCount = 0;
+  onProgress?.(0);
+
+  const results = await Promise.all(
+    urls.map(async (url) => {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Fetch failed for ${url}`);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        loadedCount++;
+        onProgress?.(Math.round((loadedCount / urls.length) * 100));
+        activeBlobUrls.push(blobUrl);
+        return blobUrl;
+      } catch (e) {
+        console.warn("Preload failed, falling back to direct URL:", e);
+        loadedCount++;
+        onProgress?.(Math.round((loadedCount / urls.length) * 100));
+        return url;
+      }
+    })
+  );
+  return results;
+};

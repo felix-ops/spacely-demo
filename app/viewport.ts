@@ -11,12 +11,15 @@ import "@babylonjs/core/Helpers/sceneHelpers";
 import { WebXRState } from "@babylonjs/core/XR/webXRTypes";
 import { SHADER_NAME } from "./shader";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
+import { getAssetUrl } from "./environments";
+import { preloadImages } from "@/lib/utils";
 
 export const setup = async (
   scene: Scene,
   engine: Engine,
   urlPrefix = "/cubemaps/classroom_3k/",
   maxDepth?: number,
+  onProgress?: (percent: number) => void,
 ) => {
   currentMaxDepth = maxDepth !== undefined ? maxDepth : 13;
 
@@ -44,26 +47,32 @@ export const setup = async (
   sphere.scaling.y = -1; // flip faces inward
 
   // Textures
+  const resolvedPrefix = getAssetUrl(urlPrefix);
   const colorUrls = [
-    `${urlPrefix}color_px.png`,
-    `${urlPrefix}color_py.png`,
-    `${urlPrefix}color_pz.png`,
-    `${urlPrefix}color_nx.png`,
-    `${urlPrefix}color_ny.png`,
-    `${urlPrefix}color_nz.png`,
+    `${resolvedPrefix}color_px.png`,
+    `${resolvedPrefix}color_py.png`,
+    `${resolvedPrefix}color_pz.png`,
+    `${resolvedPrefix}color_nx.png`,
+    `${resolvedPrefix}color_ny.png`,
+    `${resolvedPrefix}color_nz.png`,
   ];
 
   const depthUrls = [
-    `${urlPrefix}depth_packed_px.png`,
-    `${urlPrefix}depth_packed_py.png`,
-    `${urlPrefix}depth_packed_pz.png`,
-    `${urlPrefix}depth_packed_nx.png`,
-    `${urlPrefix}depth_packed_ny.png`,
-    `${urlPrefix}depth_packed_nz.png`,
+    `${resolvedPrefix}depth_packed_px.png`,
+    `${resolvedPrefix}depth_packed_py.png`,
+    `${resolvedPrefix}depth_packed_pz.png`,
+    `${resolvedPrefix}depth_packed_nx.png`,
+    `${resolvedPrefix}depth_packed_ny.png`,
+    `${resolvedPrefix}depth_packed_nz.png`,
   ];
 
-  activeColorTexture = CubeTexture.CreateFromImages(colorUrls, scene, true);
-  activeDepthTexture = CubeTexture.CreateFromImages(depthUrls, scene, true);
+  const [preloadedColorUrls, preloadedDepthUrls] = await Promise.all([
+    preloadImages(colorUrls, onProgress),
+    preloadImages(depthUrls, onProgress),
+  ]);
+
+  activeColorTexture = CubeTexture.CreateFromImages(preloadedColorUrls, scene, true);
+  activeDepthTexture = CubeTexture.CreateFromImages(preloadedDepthUrls, scene, true);
   activeDepthTexture.updateSamplingMode(Texture.NEAREST_SAMPLINGMODE);
   activeDepthTexture.gammaSpace = false;
 
@@ -142,10 +151,11 @@ let activeDepthTexture: CubeTexture | null = null;
 let currentMaxDepth = 8;
 let isStereo = true;
 
-export const updateTextures = (
+export const updateTextures = async (
   scene: Scene,
   urlPrefix: string,
   maxDepth?: number,
+  onProgress?: (percent: number) => void,
 ) => {
   currentMaxDepth = maxDepth !== undefined ? maxDepth : 8;
   const sphere = scene.getMeshByName("sphere");
@@ -156,26 +166,32 @@ export const updateTextures = (
   if (activeColorTexture) activeColorTexture.dispose();
   if (activeDepthTexture) activeDepthTexture.dispose();
 
+  const resolvedPrefix = getAssetUrl(urlPrefix);
   const colorUrls = [
-    `${urlPrefix}color_px.png`,
-    `${urlPrefix}color_py.png`,
-    `${urlPrefix}color_pz.png`,
-    `${urlPrefix}color_nx.png`,
-    `${urlPrefix}color_ny.png`,
-    `${urlPrefix}color_nz.png`,
+    `${resolvedPrefix}color_px.png`,
+    `${resolvedPrefix}color_py.png`,
+    `${resolvedPrefix}color_pz.png`,
+    `${resolvedPrefix}color_nx.png`,
+    `${resolvedPrefix}color_ny.png`,
+    `${resolvedPrefix}color_nz.png`,
   ];
 
   const depthUrls = [
-    `${urlPrefix}depth_packed_px.png`,
-    `${urlPrefix}depth_packed_py.png`,
-    `${urlPrefix}depth_packed_pz.png`,
-    `${urlPrefix}depth_packed_nx.png`,
-    `${urlPrefix}depth_packed_ny.png`,
-    `${urlPrefix}depth_packed_nz.png`,
+    `${resolvedPrefix}depth_packed_px.png`,
+    `${resolvedPrefix}depth_packed_py.png`,
+    `${resolvedPrefix}depth_packed_pz.png`,
+    `${resolvedPrefix}depth_packed_nx.png`,
+    `${resolvedPrefix}depth_packed_ny.png`,
+    `${resolvedPrefix}depth_packed_nz.png`,
   ];
 
-  activeColorTexture = CubeTexture.CreateFromImages(colorUrls, scene, true);
-  activeDepthTexture = CubeTexture.CreateFromImages(depthUrls, scene, true);
+  const [preloadedColorUrls, preloadedDepthUrls] = await Promise.all([
+    preloadImages(colorUrls, onProgress),
+    preloadImages(depthUrls, onProgress),
+  ]);
+
+  activeColorTexture = CubeTexture.CreateFromImages(preloadedColorUrls, scene, true);
+  activeDepthTexture = CubeTexture.CreateFromImages(preloadedDepthUrls, scene, true);
   activeDepthTexture.updateSamplingMode(Texture.NEAREST_SAMPLINGMODE);
   activeDepthTexture.gammaSpace = false;
 

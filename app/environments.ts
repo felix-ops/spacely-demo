@@ -4,6 +4,17 @@ export interface Environment {
   maxDepth?: number;
 }
 
+export const ASSET_BASE_URL = "https://cdn.jsdelivr.net/gh/felix-ops/website-assets@main/projects/spacely-demo/";
+
+export const getAssetUrl = (path: string): string => {
+  if (!path) return "";
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
+  const cleanPath = path.startsWith("/") ? path.slice(1) : path;
+  return `${ASSET_BASE_URL}${cleanPath}`;
+};
+
 export const ENVIRONMENTS: Environment[] = [
   {
     name: "Classroom (Blender - Rendered)",

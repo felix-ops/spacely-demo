@@ -12,6 +12,7 @@ import type { Scene } from "@babylonjs/core/scene";
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import EnvironmentSelector from "@/components/environment-selector";
 import ResolutionPanel from "@/components/resolution-panel";
+import LoadingProgress from "@/components/loading-progress";
 import { ENVIRONMENTS } from "@/app/environments";
 
 export default function ViewerPage() {
@@ -24,10 +25,15 @@ export default function ViewerPage() {
   } | null>(null);
   const [maxDepth, setMaxDepthState] = useState(ENVIRONMENTS[0].maxDepth || 8);
   const [isStereoscopic, setIsStereoscopicState] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState<number | null>(null);
 
   const handleSceneReady = async (s: Scene, e: Engine) => {
-    await setup(s, e, selectedEnv.urlPrefix, maxDepth);
+    setLoadingProgress(0);
+    await setup(s, e, selectedEnv.urlPrefix, maxDepth, (p) => {
+      setLoadingProgress(p);
+    });
     setScene(s);
+    setTimeout(() => setLoadingProgress(null), 500);
   };
 
   useEffect(() => {
@@ -38,7 +44,19 @@ export default function ViewerPage() {
 
   useEffect(() => {
     if (scene) {
-      updateTextures(scene, selectedEnv.urlPrefix, selectedEnv.maxDepth);
+      const load = async () => {
+        setLoadingProgress(0);
+        await updateTextures(
+          scene,
+          selectedEnv.urlPrefix,
+          selectedEnv.maxDepth,
+          (p) => {
+            setLoadingProgress(p);
+          },
+        );
+        setTimeout(() => setLoadingProgress(null), 500);
+      };
+      load();
     }
   }, [selectedEnv, scene]);
 
@@ -71,6 +89,9 @@ export default function ViewerPage() {
         isStereoscopic={isStereoscopic}
         onStereoscopicChange={setIsStereoscopicState}
       />
+      {loadingProgress !== null && (
+        <LoadingProgress progress={loadingProgress} />
+      )}
       {/* <ResolutionPanel
         resolutionScale={resolutionScale}
         onResolutionScaleChange={setResolutionScale}
