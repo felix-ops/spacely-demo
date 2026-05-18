@@ -4,21 +4,25 @@ import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
 import { ShaderMaterial } from "@babylonjs/core/Materials/shaderMaterial";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
+import { CubeTexture } from "@babylonjs/core/Materials/Textures/cubeTexture";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import "@babylonjs/core/Helpers/sceneHelpers";
 import { WebXRState } from "@babylonjs/core/XR/webXRTypes";
 import { SHADER_NAME } from "./shader";
-import { fetchMaxDepthFromPng } from "../lib/utils";
-
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
+import { getAssetUrl } from "./environments";
+import { preloadImages } from "@/lib/utils";
+
 export const setup = async (
   scene: Scene,
   engine: Engine,
-  colorUrl = "/samples/classroom_3k.jpg",
-  depthUrl = "/samples/classroom_3k_depth.png",
+  urlPrefix = "/cubemaps/classroom_3k/",
   maxDepth?: number,
+  onProgress?: (percent: number) => void,
 ) => {
+  currentMaxDepth = maxDepth !== undefined ? maxDepth : 13;
+
   const canvas = engine.getRenderingCanvas();
 
   // Dark background
@@ -43,14 +47,33 @@ export const setup = async (
   sphere.scaling.y = -1; // flip faces inward
 
   // Textures
-  activeColorTexture = new Texture(colorUrl, scene, true);
-  activeDepthTexture = new Texture(
-    depthUrl,
-    scene,
-    true,
-    true,
-    Texture.NEAREST_SAMPLINGMODE,
-  );
+  const resolvedPrefix = getAssetUrl(urlPrefix);
+  const colorUrls = [
+    `${resolvedPrefix}color_px.png`,
+    `${resolvedPrefix}color_py.png`,
+    `${resolvedPrefix}color_pz.png`,
+    `${resolvedPrefix}color_nx.png`,
+    `${resolvedPrefix}color_ny.png`,
+    `${resolvedPrefix}color_nz.png`,
+  ];
+
+  const depthUrls = [
+    `${resolvedPrefix}depth_packed_px.png`,
+    `${resolvedPrefix}depth_packed_py.png`,
+    `${resolvedPrefix}depth_packed_pz.png`,
+    `${resolvedPrefix}depth_packed_nx.png`,
+    `${resolvedPrefix}depth_packed_ny.png`,
+    `${resolvedPrefix}depth_packed_nz.png`,
+  ];
+
+  const [preloadedColorUrls, preloadedDepthUrls] = await Promise.all([
+    preloadImages(colorUrls, onProgress),
+    preloadImages(depthUrls, onProgress),
+  ]);
+
+  activeColorTexture = CubeTexture.CreateFromImages(preloadedColorUrls, scene, true);
+  activeDepthTexture = CubeTexture.CreateFromImages(preloadedDepthUrls, scene, true);
+  activeDepthTexture.updateSamplingMode(Texture.NEAREST_SAMPLINGMODE);
   activeDepthTexture.gammaSpace = false;
 
   // Custom shader material for equirectangular projection + depth parallax
@@ -63,6 +86,7 @@ export const setup = async (
       "maxDepth",
       "u_time",
       "viewProjection",
+      "isStereoscopic",
     ],
     samplers: ["colorTexture", "depthTexture"],
   });
@@ -70,11 +94,8 @@ export const setup = async (
   sphereMat.setTexture("colorTexture", activeColorTexture);
   sphereMat.setTexture("depthTexture", activeDepthTexture);
 
-  if (maxDepth !== undefined) {
-    sphereMat.setFloat("maxDepth", maxDepth);
-  } else {
-    sphereMat.setFloat("maxDepth", 8); // fallback
-  }
+  sphereMat.setFloat("maxDepth", currentMaxDepth);
+  sphereMat.setFloat("isStereoscopic", isStereo ? 1.0 : 0.0);
 
   sphereMat.backFaceCulling = false;
   sphere.material = sphereMat;
@@ -86,8 +107,7 @@ export const setup = async (
     elapsedTime += engine.getDeltaTime() / 1000;
     sphereMat.setFloat("u_time", elapsedTime);
 
-    const amplitude = 0.032;
-
+    // const amplitude = 0.032;
     // camera.position.x = Math.sin(elapsedTime * 10) * amplitude;
     // camera.position.y = Math.cos(elapsedTime * 10) * amplitude;
   });
@@ -126,15 +146,18 @@ export const setup = async (
   }
 };
 
-let activeColorTexture: Texture | null = null;
-let activeDepthTexture: Texture | null = null;
+let activeColorTexture: CubeTexture | null = null;
+let activeDepthTexture: CubeTexture | null = null;
+let currentMaxDepth = 8;
+let isStereo = true;
 
-export const updateTextures = (
+export const updateTextures = async (
   scene: Scene,
-  colorUrl: string,
-  depthUrl: string,
+  urlPrefix: string,
   maxDepth?: number,
+  onProgress?: (percent: number) => void,
 ) => {
+  currentMaxDepth = maxDepth !== undefined ? maxDepth : 8;
   const sphere = scene.getMeshByName("sphere");
   if (!sphere || !sphere.material) return;
 
@@ -143,27 +166,54 @@ export const updateTextures = (
   if (activeColorTexture) activeColorTexture.dispose();
   if (activeDepthTexture) activeDepthTexture.dispose();
 
-  activeColorTexture = new Texture(colorUrl, scene, true);
-  activeDepthTexture = new Texture(
-    depthUrl,
-    scene,
-    true,
-    true,
-    Texture.NEAREST_SAMPLINGMODE,
-  );
+  const resolvedPrefix = getAssetUrl(urlPrefix);
+  const colorUrls = [
+    `${resolvedPrefix}color_px.png`,
+    `${resolvedPrefix}color_py.png`,
+    `${resolvedPrefix}color_pz.png`,
+    `${resolvedPrefix}color_nx.png`,
+    `${resolvedPrefix}color_ny.png`,
+    `${resolvedPrefix}color_nz.png`,
+  ];
+
+  const depthUrls = [
+    `${resolvedPrefix}depth_packed_px.png`,
+    `${resolvedPrefix}depth_packed_py.png`,
+    `${resolvedPrefix}depth_packed_pz.png`,
+    `${resolvedPrefix}depth_packed_nx.png`,
+    `${resolvedPrefix}depth_packed_ny.png`,
+    `${resolvedPrefix}depth_packed_nz.png`,
+  ];
+
+  const [preloadedColorUrls, preloadedDepthUrls] = await Promise.all([
+    preloadImages(colorUrls, onProgress),
+    preloadImages(depthUrls, onProgress),
+  ]);
+
+  activeColorTexture = CubeTexture.CreateFromImages(preloadedColorUrls, scene, true);
+  activeDepthTexture = CubeTexture.CreateFromImages(preloadedDepthUrls, scene, true);
+  activeDepthTexture.updateSamplingMode(Texture.NEAREST_SAMPLINGMODE);
   activeDepthTexture.gammaSpace = false;
 
   sphereMat.setTexture("colorTexture", activeColorTexture);
   sphereMat.setTexture("depthTexture", activeDepthTexture);
 
-  if (maxDepth !== undefined) {
-    sphereMat.setFloat("maxDepth", maxDepth);
-  } else {
-    sphereMat.setFloat("maxDepth", 8); // fallback
-    // fetchMaxDepthFromPng(depthUrl).then((depth) => {
-    //   if (depth !== null) {
-    //     sphereMat.setFloat("maxDepth", depth);
-    //   }
-    // });
-  }
+  sphereMat.setFloat("maxDepth", currentMaxDepth);
+};
+
+export const setMaxDepth = (scene: Scene, maxDepth: number) => {
+  currentMaxDepth = maxDepth;
+  const sphere = scene.getMeshByName("sphere");
+  if (!sphere || !sphere.material) return;
+  (sphere.material as ShaderMaterial).setFloat("maxDepth", currentMaxDepth);
+};
+
+export const setStereoscopic = (scene: Scene, isStereoscopic: boolean) => {
+  isStereo = isStereoscopic;
+  const sphere = scene.getMeshByName("sphere");
+  if (!sphere || !sphere.material) return;
+  (sphere.material as ShaderMaterial).setFloat(
+    "isStereoscopic",
+    isStereo ? 1.0 : 0.0,
+  );
 };

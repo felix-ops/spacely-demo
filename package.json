@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@babylonjs/core": "^9.4.1",
+    "@babylonjs/gui": "^9.4.1",
     "@babylonjs/inspector": "^9.4.1",
     "@babylonjs/loaders": "^9.4.1",
     "next": "16.2.4",
