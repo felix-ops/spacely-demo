@@ -86,8 +86,7 @@ export const setup = async (
     elapsedTime += engine.getDeltaTime() / 1000;
     sphereMat.setFloat("u_time", elapsedTime);
 
-    const amplitude = 0.032;
-
+    // const amplitude = 0.032;
     // camera.position.x = Math.sin(elapsedTime * 10) * amplitude;
     // camera.position.y = Math.cos(elapsedTime * 10) * amplitude;
   });

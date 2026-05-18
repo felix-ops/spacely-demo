@@ -74,12 +74,11 @@ const FRAGMENT_SHADER = /*glsl*/ `
   }
 
   // ── main ───────────────────────────────────────────────────────────────────
-
   void main() {
     vec3 camPos = getCameraPosition();
 
     // View ray: from camera through this fragment's world position
-    vec3 rayDir = normalize(vWorldPosition - camPos);
+    vec3 rayDir = normalize(vWorldPosition - camPos); 
 
     // March along the ray, starting from the camera.
     // We march from t = 0 up to t = maxDepth * 2 (enough to cross the scene).
