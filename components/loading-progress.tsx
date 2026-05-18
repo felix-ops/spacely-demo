@@ -30,7 +30,7 @@ export default function LoadingProgress({ progress }: LoadingProgressProps) {
             />
           </svg>
           <span className="text-[10px] font-bold font-sans tracking-wider uppercase text-neutral-400">
-            Loading Images
+            Loading Assets
           </span>
         </div>
 
