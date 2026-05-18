@@ -264,8 +264,21 @@ const pipelineSteps = [
   },
   {
     title: "AI Depth Estimation",
-    description:
-      "Feed the imagery through the DA² depth AI model. The model predicts per-pixel distance from the camera, generating a complete spatial map from a 2D photograph.",
+    description: (
+      <>
+        Feed the imagery through the{" "}
+        <a
+          href="https://github.com/EnVision-Research/DA-2"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-black font-semibold transition-colors"
+        >
+          DA² depth AI model
+        </a>
+        . The model predicts per-pixel distance from the camera, generating a
+        complete spatial map from a 2D photograph.
+      </>
+    ),
     tags: ["DA²", "Monocular", "AI / ML"],
   },
   {
@@ -297,22 +310,22 @@ const pipelineSteps = [
 function HeroCarousel() {
   const slides = [
     {
-      image: "/rico-theta-cubemap.png",
+      image: "slide_show/rico_theta_cubemap.png",
       title: pipelineSteps[0].title,
       description: pipelineSteps[0].description,
     },
     {
-      image: "/classroom-depth.png",
+      image: "slide_show/classroom_depth.png",
       title: pipelineSteps[1].title,
       description: pipelineSteps[1].description,
     },
     {
-      image: "/canvas_loop.gif",
+      image: "slide_show/canvas_loop.gif",
       title: pipelineSteps[3].title,
       description: pipelineSteps[3].description,
     },
     {
-      image: "/stereo-explanation.png",
+      image: "slide_show/stereo_explanation.png",
       title: pipelineSteps[4].title,
       description: pipelineSteps[4].description,
     },
