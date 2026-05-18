@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Spacely 3D Depth-Parallax Demo
+
+A browser-native WebXR depth-parallax viewer that transforms standard 360° panoramas into fully immersive stereoscopic VR spaces. Built as part of a technical DX application pipeline showcasing real-time GPU-based depth reconstruction and spatial layout optimization.
+
+---
+
+## Key Features
+
+- **3D Depth Parallax**: Simulates realistic spatial depth from a single equirectangular capture using custom GPU shaders.
+- **DA² AI Depth Integration**: Leverages predicted spatial layouts parsed into high-precision 16-bit packed depth textures (R + G/255 encoding).
+- **High-Performance GLSL Ray Marching**: Traverses packed distance layers natively in a customized Babylon.js render pipeline with optimized distance check search loops.
+- **Interactive Metric Controls**:
+  - **Max Depth Slider**: Adjust target environment boundary limits manually or dynamically between **1.0m and 30.0m** (with real-time keystroke input parsing and focus safety sanitization).
+  - **Render Scale Optimizer**: Floating resolution modifier containing real-time pixel counter and MP (Megapixel) estimation metrics.
+  - **Stereo/Mono Toggle**: Switches immediately between monoscopic presentation and stereoscopic rendering formats.
+- **Refined Black-and-White Theme**: Floating side-docked panels designed with a premium, high-contrast black-and-white minimalist layout matching Spacely corporate guidelines.
+
+---
+
+## Tech Stack
+
+- **Framework**: [Next.js](https://nextjs.org/) (App Router, React)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **3D Engine**: [Babylon.js](https://www.babylonjs.com/) (WebGL 2.0 / Custom GLSL shaders)
+- **Package Manager**: `pnpm`
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+Ensure you have [Node.js](https://nodejs.org/) (v18+) and [pnpm](https://pnpm.io/) installed.
+
+### Installation
+
+1. Clone the repository and navigate to the project root:
+
+   ```bash
+   git clone https://github.com/felix-ops/spacely-demo.git
+   cd spacely-demo
+   ```
+
+2. Install dependencies:
+   ```bash
+   pnpm install
+   ```
+
+### Running Locally
+
+Start the local development server:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser to experience the landing page and launch the interactive WebGL viewport.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Core Technical Pipeline
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Panorama Capture**: Captures 360° panoramas using client-accessible cameras (Ricoh Theta, Insta360).
+2. **AI Model parsing**: Generates a monocular depth prediction map utilizing the DA² spatial layout neural network.
+3. **16-Bit Compression**: Packs depth distance outputs directly into standard web-legible png files.
+4. **Distance Marching**: Custom ray marching fragment shaders track camera-to-surface intersection in real-time, outputting dynamic view parallax.
+5. **WebXR Translation**: Produces per-eye offset projections inside compatible browser headsets natively.

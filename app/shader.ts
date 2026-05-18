@@ -11,13 +11,23 @@ const VERTEX_SHADER = /*glsl*/ `
   // Uniforms
   uniform mat4 worldViewProjection;
   uniform mat4 world;
+  uniform mat4 view;
+  uniform float isStereoscopic;
 
   // Varyings
   varying vec3 vWorldPosition;
+  varying vec3 vCameraPosition;
 
   void main() {
     vec4 worldPos = world * vec4(position, 1.0);
     vWorldPosition = worldPos.xyz;
+
+    // Extract the camera world-space position from the view matrix.
+    // view = [R | t], where camera position = -R^T * t.
+    // This is automatically correct per-eye during WebXR stereo rendering.
+    mat3 rotT = transpose(mat3(view));
+    vCameraPosition = (-rotT * view[3].xyz) * isStereoscopic;
+
     gl_Position = worldViewProjection * vec4(position, 1.0);
   }
 `;
@@ -27,11 +37,11 @@ const FRAGMENT_SHADER = /*glsl*/ `
 
   // Varyings
   varying vec3 vWorldPosition;
+  varying vec3 vCameraPosition;
 
   // Uniforms
-  uniform sampler2D colorTexture;
-  uniform sampler2D depthTexture;
-  uniform mat4      view;             // per-eye view matrix (auto-updated by Babylon/WebXR)
+  uniform samplerCube colorTexture;
+  uniform samplerCube depthTexture;
   uniform float     maxDepth;         // world-space distance that white (1.0) maps to
   uniform float     u_time;           // Time for random jitter
 
@@ -50,32 +60,16 @@ const FRAGMENT_SHADER = /*glsl*/ `
 
   // ── helpers ────────────────────────────────────────────────────────────────
 
-  // Extract the camera world-space position from the view matrix.
-  // view = [R | t], where camera position = -R^T * t.
-  // This is automatically correct per-eye during WebXR stereo rendering.
-  vec3 getCameraPosition() {
-    mat3 rotT = transpose(mat3(view));
-    return -rotT * view[3].xyz;
-  }
-
-  // Convert a 3-D direction to equirectangular UVs
-  vec2 dirToUV(vec3 d) {
-    float u = 0.5 + atan(d.x, d.z) / TAU;
-    float v = 0.5 + asin(d.y) / PI;
-    return vec2(u, v);
-  }
-
   // Sample the packed 16-bit depth surface distance
   float sampleDepth(vec3 d) {
-    vec2 uv = dirToUV(d);
-    vec4 packedDepth = texture2D(depthTexture, uv);
+    vec4 packedDepth = textureCube(depthTexture, d);
     float decodedDepth = packedDepth.r + (packedDepth.g / 255.0);
     return decodedDepth * maxDepth;
   }
 
   // ── main ───────────────────────────────────────────────────────────────────
   void main() {
-    vec3 camPos = getCameraPosition();
+    vec3 camPos = vCameraPosition;
 
     // View ray: from camera through this fragment's world position
     vec3 rayDir = normalize(vWorldPosition - camPos); 
@@ -126,13 +120,12 @@ const FRAGMENT_SHADER = /*glsl*/ `
       }
       float tHit = (lo + hi) * 0.5;
       vec3  pHit = camPos + rayDir * tHit;
-      vec2  uv   = dirToUV(normalize(pHit));
-      gl_FragColor = texture2D(colorTexture, uv);
+      vec3  dir  = normalize(pHit);
+      gl_FragColor = textureCube(colorTexture, dir);
     } else {
-      // No intersection — fall back to the basic equirectangular lookup
+      // No intersection — fall back to the basic lookup
       vec3 dir = normalize(vWorldPosition);
-      vec2 uv  = dirToUV(dir);
-      gl_FragColor = texture2D(colorTexture, uv);
+      gl_FragColor = textureCube(colorTexture, dir);
     }
   }
 `;

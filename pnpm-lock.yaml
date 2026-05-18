@@ -8,6 +8,9 @@ dependencies:
   '@babylonjs/core':
     specifier: ^9.4.1
     version: 9.4.1
+  '@babylonjs/gui':
+    specifier: ^9.4.1
+    version: 9.4.1(@babylonjs/core@9.4.1)
   '@babylonjs/inspector':
     specifier: ^9.4.1
     version: 9.4.1(@babylonjs/addons@9.4.1)(@babylonjs/core@9.4.1)(@babylonjs/gui-editor@9.4.1)(@babylonjs/gui@9.4.1)(@babylonjs/loaders@9.4.1)(@babylonjs/materials@9.4.1)(@babylonjs/serializers@9.4.1)(@fluentui-contrib/react-resize-handle@0.8.4)(@fluentui-contrib/react-virtualizer@1.0.0)(@fluentui/react-components@9.73.8)(@fluentui/react-icons@2.0.325)(react-dom@19.2.4)(react@19.2.4)(usehooks-ts@3.1.1)
