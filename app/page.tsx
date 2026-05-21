@@ -227,8 +227,7 @@ export default function HeroPage() {
       <footer className="border-t border-black/10 py-6 bg-white">
         <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="text-gray-500 text-xs">
-            Built by Bhuvaneshwaran M - Spacely R&amp;D Engineer Application
-            Demo
+            Built by Bhuvaneshwaran M - Spacely Project Demo
           </div>
           <div className="flex gap-4 text-xs">
             <a
@@ -348,11 +347,10 @@ function HeroCarousel() {
         {slides.map((slide, idx) => (
           <h3
             key={idx}
-            className={`col-start-1 row-start-1 text-xl font-bold text-black transition-opacity duration-500 ${
-              idx === currentIndex
+            className={`col-start-1 row-start-1 text-xl font-bold text-black transition-opacity duration-500 ${idx === currentIndex
                 ? "opacity-100 z-10"
                 : "opacity-0 z-0 pointer-events-none"
-            }`}
+              }`}
             aria-hidden={idx !== currentIndex}
           >
             {slide.title}
@@ -370,9 +368,8 @@ function HeroCarousel() {
             key={idx}
             src={getAssetUrl(slide.image)}
             alt={slide.title}
-            className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-100 ${
-              idx === currentIndex ? "opacity-100" : "opacity-0"
-            }`}
+            className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-100 ${idx === currentIndex ? "opacity-100" : "opacity-0"
+              }`}
           />
         ))}
       </div>
@@ -383,11 +380,10 @@ function HeroCarousel() {
           {slides.map((slide, idx) => (
             <p
               key={idx}
-              className={`col-start-1 row-start-1 text-sm text-gray-600 transition-opacity duration-500 ${
-                idx === currentIndex
+              className={`col-start-1 row-start-1 text-sm text-gray-600 transition-opacity duration-500 ${idx === currentIndex
                   ? "opacity-100 z-10"
                   : "opacity-0 z-0 pointer-events-none"
-              }`}
+                }`}
               aria-hidden={idx !== currentIndex}
             >
               {slide.description}
@@ -399,11 +395,10 @@ function HeroCarousel() {
             <button
               key={idx}
               onClick={() => setCurrentIndex(idx)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                idx === currentIndex
+              className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentIndex
                   ? "w-6 bg-black"
                   : "w-1.5 bg-black/20 hover:bg-black/40"
-              }`}
+                }`}
             />
           ))}
         </div>
