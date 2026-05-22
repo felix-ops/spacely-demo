@@ -6,18 +6,19 @@ import {
   updateTextures,
   setMaxDepth,
   setStereoscopic,
-} from "../viewport";
+} from "./viewport";
 import { useState, useEffect } from "react";
 import type { Scene } from "@babylonjs/core/scene";
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import EnvironmentSelector from "@/components/environment-selector";
 import ResolutionPanel from "@/components/resolution-panel";
 import LoadingProgress from "@/components/loading-progress";
-import { ENVIRONMENTS } from "@/app/environments";
+import { ENVIRONMENTS } from "@/app/viewer/environments";
 
 export default function ViewerPage() {
   const [scene, setScene] = useState<Scene | null>(null);
   const [selectedEnv, setSelectedEnv] = useState(ENVIRONMENTS[0]);
+  const [vrWarning, setVrWarning] = useState<boolean>(false);
   const [resolutionScale, setResolutionScale] = useState(1.0);
   const [renderDetails, setRenderDetails] = useState<{
     width: number;
@@ -29,9 +30,16 @@ export default function ViewerPage() {
 
   const handleSceneReady = async (s: Scene, e: Engine) => {
     setLoadingProgress(0);
-    await setup(s, e, selectedEnv.urlPrefix, maxDepth, (p) => {
-      setLoadingProgress(p);
-    });
+    const isVrSupported = await setup(
+      s,
+      e,
+      selectedEnv.urlPrefix,
+      maxDepth,
+      (p) => {
+        setLoadingProgress(p);
+      },
+    );
+    setVrWarning(!isVrSupported);
     setScene(s);
     setTimeout(() => setLoadingProgress(null), 500);
   };
@@ -81,6 +89,11 @@ export default function ViewerPage() {
         resolutionScale={resolutionScale}
         onResolutionChange={(w, h) => setRenderDetails({ width: w, height: h })}
       />
+      {vrWarning && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-yellow-500/90 text-yellow-950 font-medium px-4 py-2 rounded-md backdrop-blur-sm z-10 pointer-events-none shadow-lg">
+          Warning: VR Device not detected
+        </div>
+      )}
       <EnvironmentSelector
         selectedEnv={selectedEnv}
         onSelect={setSelectedEnv}

@@ -4,7 +4,8 @@ export interface Environment {
   maxDepth?: number;
 }
 
-export const ASSET_BASE_URL = "https://cdn.jsdelivr.net/gh/felix-ops/website-assets@main/projects/spacely-demo/";
+export const ASSET_BASE_URL =
+  "https://cdn.jsdelivr.net/gh/felix-ops/website-assets@main/projects/spacely-demo/";
 
 export const getAssetUrl = (path: string): string => {
   if (!path) return "";

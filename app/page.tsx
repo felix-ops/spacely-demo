@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getAssetUrl } from "./environments";
+import { getAssetUrl } from "./viewer/environments";
 
 export default function HeroPage() {
   const [scrolled, setScrolled] = useState(false);
@@ -347,10 +347,11 @@ function HeroCarousel() {
         {slides.map((slide, idx) => (
           <h3
             key={idx}
-            className={`col-start-1 row-start-1 text-xl font-bold text-black transition-opacity duration-500 ${idx === currentIndex
+            className={`col-start-1 row-start-1 text-xl font-bold text-black transition-opacity duration-500 ${
+              idx === currentIndex
                 ? "opacity-100 z-10"
                 : "opacity-0 z-0 pointer-events-none"
-              }`}
+            }`}
             aria-hidden={idx !== currentIndex}
           >
             {slide.title}
@@ -368,8 +369,9 @@ function HeroCarousel() {
             key={idx}
             src={getAssetUrl(slide.image)}
             alt={slide.title}
-            className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-100 ${idx === currentIndex ? "opacity-100" : "opacity-0"
-              }`}
+            className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-100 ${
+              idx === currentIndex ? "opacity-100" : "opacity-0"
+            }`}
           />
         ))}
       </div>
@@ -380,10 +382,11 @@ function HeroCarousel() {
           {slides.map((slide, idx) => (
             <p
               key={idx}
-              className={`col-start-1 row-start-1 text-sm text-gray-600 transition-opacity duration-500 ${idx === currentIndex
+              className={`col-start-1 row-start-1 text-sm text-gray-600 transition-opacity duration-500 ${
+                idx === currentIndex
                   ? "opacity-100 z-10"
                   : "opacity-0 z-0 pointer-events-none"
-                }`}
+              }`}
               aria-hidden={idx !== currentIndex}
             >
               {slide.description}
@@ -395,10 +398,11 @@ function HeroCarousel() {
             <button
               key={idx}
               onClick={() => setCurrentIndex(idx)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentIndex
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                idx === currentIndex
                   ? "w-6 bg-black"
                   : "w-1.5 bg-black/20 hover:bg-black/40"
-                }`}
+              }`}
             />
           ))}
         </div>

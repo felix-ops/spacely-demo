@@ -13,6 +13,7 @@ import { SHADER_NAME } from "./shader";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { getAssetUrl } from "./environments";
 import { preloadImages } from "@/lib/utils";
+import { WebXRSessionManager } from "@babylonjs/core/XR/webXRSessionManager";
 
 export const setup = async (
   scene: Scene,
@@ -20,7 +21,7 @@ export const setup = async (
   urlPrefix = "/cubemaps/classroom_3k/",
   maxDepth?: number,
   onProgress?: (percent: number) => void,
-) => {
+): Promise<boolean> => {
   currentMaxDepth = maxDepth !== undefined ? maxDepth : 13;
 
   const canvas = engine.getRenderingCanvas();
@@ -71,8 +72,16 @@ export const setup = async (
     preloadImages(depthUrls, onProgress),
   ]);
 
-  activeColorTexture = CubeTexture.CreateFromImages(preloadedColorUrls, scene, true);
-  activeDepthTexture = CubeTexture.CreateFromImages(preloadedDepthUrls, scene, true);
+  activeColorTexture = CubeTexture.CreateFromImages(
+    preloadedColorUrls,
+    scene,
+    true,
+  );
+  activeDepthTexture = CubeTexture.CreateFromImages(
+    preloadedDepthUrls,
+    scene,
+    true,
+  );
   activeDepthTexture.updateSamplingMode(Texture.NEAREST_SAMPLINGMODE);
   activeDepthTexture.gammaSpace = false;
 
@@ -113,6 +122,14 @@ export const setup = async (
   });
 
   // WebXR VR support
+  let isVrSupported = false;
+  try {
+    isVrSupported =
+      await WebXRSessionManager.IsSessionSupportedAsync("immersive-vr");
+  } catch (e) {
+    console.warn("Error checking VR support:", e);
+  }
+
   try {
     const xrExperience = await scene.createDefaultXRExperienceAsync({
       floorMeshes: [],
@@ -144,6 +161,8 @@ export const setup = async (
   } catch (e) {
     console.warn("WebXR initialization failed:", e);
   }
+
+  return isVrSupported;
 };
 
 let activeColorTexture: CubeTexture | null = null;
@@ -190,8 +209,16 @@ export const updateTextures = async (
     preloadImages(depthUrls, onProgress),
   ]);
 
-  activeColorTexture = CubeTexture.CreateFromImages(preloadedColorUrls, scene, true);
-  activeDepthTexture = CubeTexture.CreateFromImages(preloadedDepthUrls, scene, true);
+  activeColorTexture = CubeTexture.CreateFromImages(
+    preloadedColorUrls,
+    scene,
+    true,
+  );
+  activeDepthTexture = CubeTexture.CreateFromImages(
+    preloadedDepthUrls,
+    scene,
+    true,
+  );
   activeDepthTexture.updateSamplingMode(Texture.NEAREST_SAMPLINGMODE);
   activeDepthTexture.gammaSpace = false;
 

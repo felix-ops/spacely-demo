@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 
-import { Environment, ENVIRONMENTS } from "@/app/environments";
+import { Environment, ENVIRONMENTS } from "@/app/viewer/environments";
 
 interface EnvironmentSelectorProps {
   selectedEnv: Environment;
